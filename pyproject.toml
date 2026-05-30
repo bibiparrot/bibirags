@@ -27,7 +27,7 @@ requires-python = ">=3.10"
 
 # Core dependencies (always installed)
 dependencies = [
-    "litellm>=1.86.2",
+    "litellm>=1.83.10",
     "loguru>=0.7.0",
     "numpy>=1.24.0",
 ]
@@ -36,7 +36,7 @@ dependencies = [
 # Backend extras – install only what you need
 
 txtai = [
-    "txtai[pipeline]>=7.0.0",
+    "txtai>=7.0.0",
 ]
 
 chroma = [
@@ -74,14 +74,14 @@ all = [
 # Development toolchain
 dev = [
     "bibirags[all]",
-    "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=5.0.0",
-    "ruff>=0.4.0",
     "mypy>=1.10.0",
     "pre-commit>=3.7.0",
     "build>=1.2.0",
     "twine>=5.0.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.15",
 ]
 
 [project.urls]
