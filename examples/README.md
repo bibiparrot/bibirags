@@ -4,6 +4,7 @@
 |------|---------------|
 | `quickstart_ollama.py` | All four backends with a local Ollama server |
 | `quickstart_openai.py` | All four backends with OpenAI |
+| `quickstart_dashscope.py` | All four backends with Alibaba Cloud DashScope (Qwen models) |
 | `quickstart_single_backend.py` | Minimal Qdrant-only example |
 | `quickstart_docs.py` | Load real PDF/TXT files → chunk → index → query |
 
@@ -26,6 +27,18 @@ python examples/quickstart_ollama.py
 export OPENAI_API_KEY="sk-..."
 pip install bibirags[all]
 python examples/quickstart_openai.py
+```
+
+### DashScope / Qwen (Alibaba Cloud)
+
+```bash
+export DASHSCOPE_API_KEY="sk-..."
+pip install bibirags[all]
+python examples/quickstart_dashscope.py
+
+# Users inside mainland China – use the Beijing endpoint:
+DASHSCOPE_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1 \
+python examples/quickstart_dashscope.py
 ```
 
 ### Document search (PDF / TXT)
