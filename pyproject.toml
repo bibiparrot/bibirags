@@ -1,0 +1,125 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bibirags"
+version = "0.1.0"
+description = "A simple, unified interface for RAG across multiple vector store backends (txtai, Chroma, Qdrant, LightRAG)"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "chunqishi", email = "scq830@163.com" }]
+keywords = ["rag", "retrieval", "llm", "vector-store", "embeddings", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.10"
+
+# Core dependencies (always installed)
+dependencies = [
+    "litellm>=1.86.2",
+    "loguru>=0.7.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+# Backend extras – install only what you need
+
+txtai = [
+    "txtai[pipeline]>=7.0.0",
+]
+
+chroma = [
+    "langchain-chroma>=0.1.0",
+    "langchain-litellm>=0.1.0",
+    "langchain-classic>=0.1.0",
+    "langchain-core>=0.2.0",
+]
+
+qdrant = [
+    "qdrant-client>=1.9.0",
+]
+
+lightrag = [
+    "lightrag-hku>=1.0.0",
+    "nest-asyncio>=1.6.0",
+]
+
+# Document loading extras
+docs = [
+    "langchain-community>=0.2.0",
+    "langchain-text-splitters>=0.2.0",
+    "pypdf>=4.0.0",
+]
+
+# Install everything
+all = [
+    "bibirags[txtai]",
+    "bibirags[chroma]",
+    "bibirags[qdrant]",
+    "bibirags[lightrag]",
+    "bibirags[docs]",
+]
+
+# Development toolchain
+dev = [
+    "bibirags[all]",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "pre-commit>=3.7.0",
+    "build>=1.2.0",
+    "twine>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bibiparrot/bibirags"
+Repository = "https://github.com/bibiparrot/bibirags"
+Issues = "https://github.com/bibiparrot/bibirags/issues"
+Changelog = "https://github.com/bibiparrot/bibirags/blob/main/CHANGELOG.md"
+
+# ---------------------------------------------------------------------------
+# Hatch build
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["src/bibirags"]
+
+# ---------------------------------------------------------------------------
+# Ruff (linting + formatting)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+src = ["src"]
+line-length = 99
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "PIE", "SIM"]
+ignore = ["E501"]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--tb=short -q"
