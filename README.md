@@ -157,7 +157,7 @@ Returns `(answer_string, list_of_source_chunks)`.
 ## Contributing
 
 ```bash
-git clone https://github.com/yourname/bibirags
+git clone https://github.com/bibiparrot/bibirags
 cd bibirags
 pip install -e ".[dev]"
 pre-commit install
