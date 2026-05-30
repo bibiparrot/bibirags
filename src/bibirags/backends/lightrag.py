@@ -15,7 +15,7 @@ import pathlib
 import numpy as np
 from loguru import logger
 
-from bibirags.llm import alitellm_embedding, get_embedding_dim
+from bibirags.llm import LitellmConfDict, alitellm_embedding, get_embedding_dim
 
 
 # ---------------------------------------------------------------------------
@@ -34,16 +34,16 @@ def _sanitize_kwargs(kwargs: dict) -> dict:
     return clean
 
 
-async def _create_rag(rag_root: str, llm_model: str, embed_model: str):
+async def _create_rag(rag_root: str, conf: LitellmConfDict):
     """Instantiate and initialise a :class:`LightRAG` instance."""
     import litellm
     from lightrag import LightRAG, QueryParam  # noqa: F401
     from lightrag.utils import EmbeddingFunc
 
-    embedding_dimension = await get_embedding_dim(embed_model)
+    embedding_dimension = await get_embedding_dim(conf)
 
     async def embedding_func(texts):
-        embeddings = await alitellm_embedding(texts, embed_model)
+        embeddings = await alitellm_embedding(texts, conf)
         return np.array(embeddings)
 
     async def llm_model_func(
@@ -60,9 +60,11 @@ async def _create_rag(rag_root: str, llm_model: str, embed_model: str):
         messages.append({"role": "user", "content": prompt})
 
         response = await litellm.acompletion(
-            model=llm_model,
+            model=conf["llm_model"],
             messages=messages,
             temperature=0,
+            api_base=conf.get("api_base"),
+            api_key=conf.get("api_key"),
             **_sanitize_kwargs(kwargs),
         )
         return response.choices[0].message.content
@@ -72,7 +74,7 @@ async def _create_rag(rag_root: str, llm_model: str, embed_model: str):
         llm_model_func=llm_model_func,
         embedding_func=EmbeddingFunc(
             embedding_dim=embedding_dimension,
-            max_token_size=2048,
+            max_token_size=8192,
             func=embedding_func,
         ),
         # concurrency – keep low to avoid rate-limit issues
@@ -95,8 +97,7 @@ async def _create_rag(rag_root: str, llm_model: str, embed_model: str):
 def save_lightrag(
     chunks: list[str] | str,
     rag_root: str | pathlib.Path,
-    embed_model: str,
-    llm_model: str,
+    conf: LitellmConfDict,
 ) -> None:
     """Index *chunks* using LightRAG's graph-based approach.
 
@@ -106,18 +107,13 @@ def save_lightrag(
         One or more plain-text chunks to insert.
     rag_root:
         Working directory for LightRAG's storage files.
-    embed_model:
-        LiteLLM-compatible embedding model string.
-    llm_model:
-        LiteLLM-compatible generative model string (used to build the graph).
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with ``embed_model`` and
+        ``llm_model`` set.
     """
 
     async def _run():
-        rag = await _create_rag(
-            rag_root=str(rag_root),
-            llm_model=llm_model,
-            embed_model=embed_model,
-        )
+        rag = await _create_rag(rag_root=str(rag_root), conf=conf)
         texts = [chunks] if isinstance(chunks, str) else chunks
         for chunk in texts:
             if chunk and chunk.strip():
@@ -130,8 +126,7 @@ def save_lightrag(
 def search_lightrag(
     query: str,
     rag_root: str | pathlib.Path,
-    embed_model: str,
-    llm_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> list[str]:
     """Retrieve the *top_k* most relevant chunks for *query* via LightRAG.
@@ -142,10 +137,9 @@ def search_lightrag(
         Natural-language search query.
     rag_root:
         Working directory containing a saved LightRAG index.
-    embed_model:
-        Must match the model used during indexing.
-    llm_model:
-        Must match the model used during indexing.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with ``embed_model`` and
+        ``llm_model`` set (both must match what was used during indexing).
     top_k:
         Number of results to return.
 
@@ -156,11 +150,7 @@ def search_lightrag(
     """
 
     async def _run():
-        rag = await _create_rag(
-            rag_root=str(rag_root),
-            llm_model=llm_model,
-            embed_model=embed_model,
-        )
+        rag = await _create_rag(rag_root=str(rag_root), conf=conf)
         [query_embedding] = await rag.embedding_func([query])
         results = await rag.chunks_vdb.query(
             query=query,
@@ -179,8 +169,7 @@ def search_lightrag(
 def query_lightrag(
     query: str,
     rag_root: str | pathlib.Path,
-    llm_model: str,
-    embed_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> tuple[str, str]:
     """Retrieve relevant context and generate an answer using LightRAG.
@@ -193,10 +182,9 @@ def query_lightrag(
         Question to answer.
     rag_root:
         Working directory containing a saved LightRAG index.
-    llm_model:
-        LiteLLM-compatible generative model string.
-    embed_model:
-        Must match the model used during indexing.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with ``embed_model`` and
+        ``llm_model`` set.
     top_k:
         Number of context chunks considered.
 
@@ -208,11 +196,7 @@ def query_lightrag(
     from lightrag import QueryParam
 
     async def _run():
-        rag = await _create_rag(
-            rag_root=str(rag_root),
-            llm_model=llm_model,
-            embed_model=embed_model,
-        )
+        rag = await _create_rag(rag_root=str(rag_root), conf=conf)
         context = await rag.aquery(
             query,
             param=QueryParam(mode="hybrid", only_need_context=True, top_k=top_k),

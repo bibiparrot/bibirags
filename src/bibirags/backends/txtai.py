@@ -11,11 +11,13 @@ from __future__ import annotations
 import pathlib
 from loguru import logger
 
+from bibirags.llm import LitellmConfDict
+
 
 def save_txtai(
     chunks: list[str],
     rag_root: str | pathlib.Path,
-    embed_model: str,
+    conf: LitellmConfDict,
 ) -> None:
     """Index *chunks* into a txtai embeddings store at *rag_root*.
 
@@ -25,13 +27,19 @@ def save_txtai(
         Plain-text chunks to index.
     rag_root:
         Directory where the txtai index will be persisted.
-    embed_model:
-        HuggingFace model name or path understood by txtai (e.g.
-        ``"sentence-transformers/all-MiniLM-L6-v2"``).
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with at least ``embed_model``
+        set.  txtai uses the model string directly as a HuggingFace path, e.g.
+        ``"sentence-transformers/all-MiniLM-L6-v2"``.
     """
     from txtai import Embeddings
 
-    embeddings = Embeddings(content=True, path=embed_model)
+    embeddings = Embeddings(
+        content=True,
+        path=conf["embed_model"],
+        api_base=conf.get("api_base"),
+        api_key=conf.get("api_key"),
+    )
     embeddings.index(chunks)
     embeddings.save(str(rag_root))
     logger.info(f"txtai index saved to {rag_root!r}")
@@ -40,7 +48,7 @@ def save_txtai(
 def search_txtai(
     query: str,
     rag_root: str | pathlib.Path,
-    embed_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> list[str]:
     """Retrieve the *top_k* most relevant chunks for *query*.
@@ -51,8 +59,9 @@ def search_txtai(
         Natural-language search query.
     rag_root:
         Directory containing the persisted txtai index.
-    embed_model:
-        Must match the model used when the index was built.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` — ``embed_model`` must match the
+        model used when the index was built.
     top_k:
         Number of results to return.
 
@@ -63,7 +72,12 @@ def search_txtai(
     """
     from txtai import Embeddings
 
-    embeddings = Embeddings(content=True, path=embed_model)
+    embeddings = Embeddings(
+        content=True,
+        path=conf["embed_model"],
+        api_base=conf.get("api_base"),
+        api_key=conf.get("api_key")
+    )
     embeddings.load(str(rag_root))
     results = embeddings.search(query, limit=top_k)
 
@@ -77,8 +91,7 @@ def search_txtai(
 def query_txtai(
     query: str,
     rag_root: str | pathlib.Path,
-    llm_model: str,
-    embed_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> tuple[str, list[str]]:
     """Retrieve relevant chunks and generate an answer with txtai RAG.
@@ -89,10 +102,9 @@ def query_txtai(
         Question to answer.
     rag_root:
         Directory containing the persisted txtai index.
-    llm_model:
-        HuggingFace or pipeline path for the generative model.
-    embed_model:
-        Must match the model used when the index was built.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with ``embed_model`` and
+        ``llm_model`` set.
     top_k:
         Number of context chunks to pass to the LLM.
 
@@ -103,12 +115,19 @@ def query_txtai(
     """
     from txtai import Embeddings, RAG
 
-    embeddings = Embeddings(content=True, path=embed_model)
+    embeddings = Embeddings(
+        content=True,
+        path=conf["embed_model"],
+        api_base=conf.get("api_base"),
+        api_key=conf.get("api_key"),
+    )
     embeddings.load(str(rag_root))
 
     rag = RAG(
         similarity=embeddings,
-        path=llm_model,
+        path=conf["llm_model"],
+        api_base=conf.get("api_base"),
+        api_key=conf.get("api_key"),
         output="reference",
         context=top_k,
         system="You are a document analysis assistant",

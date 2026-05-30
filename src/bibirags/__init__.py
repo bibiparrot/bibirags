@@ -7,22 +7,27 @@ Supported backends:
   - chroma
   - qdrant
   - lightrag
+
+All functions accept a :class:`~bibirags.llm.LitellmConfDict` for model
+configuration instead of bare model-name strings.
 """
 
+from bibirags.llm import LitellmConfDict, litellm_embedding, litellm_complete
 from bibirags.chunking import chunk_docs
 from bibirags.backends.txtai import save_txtai, search_txtai, query_txtai
 from bibirags.backends.chroma import save_chroma, search_chroma, query_chroma
 from bibirags.backends.qdrant import save_qdrant, search_qdrant, query_qdrant
 from bibirags.backends.lightrag import save_lightrag, search_lightrag, query_lightrag
-from bibirags.llm import litellm_embedding, litellm_complete
 
 __version__ = "0.1.0"
 __all__ = [
-    # chunking
-    "chunk_docs",
+    # config
+    "LitellmConfDict",
     # llm helpers
     "litellm_embedding",
     "litellm_complete",
+    # chunking
+    "chunk_docs",
     # txtai
     "save_txtai",
     "search_txtai",

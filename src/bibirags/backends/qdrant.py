@@ -12,7 +12,7 @@ import pathlib
 import uuid
 from loguru import logger
 
-from bibirags.llm import litellm_embedding, litellm_complete
+from bibirags.llm import LitellmConfDict, litellm_embedding, litellm_complete
 
 
 # ---------------------------------------------------------------------------
@@ -22,13 +22,13 @@ from bibirags.llm import litellm_embedding, litellm_complete
 def _add_text(
     client,
     collection_name: str,
-    embed_model: str,
+    conf: LitellmConfDict,
     text: str,
 ) -> None:
     """Embed *text* and upsert it as a point into *collection_name*."""
     from qdrant_client.http import models
 
-    [vector] = litellm_embedding([text], embed_model)
+    [vector] = litellm_embedding([text], conf)
     client.upsert(
         collection_name=collection_name,
         points=[
@@ -48,7 +48,7 @@ def _add_text(
 def save_qdrant(
     chunks: list[str],
     rag_root: str | pathlib.Path,
-    embed_model: str,
+    conf: LitellmConfDict,
 ) -> None:
     """Index *chunks* into a local Qdrant collection at *rag_root*.
 
@@ -58,8 +58,8 @@ def save_qdrant(
         Plain-text chunks to index.
     rag_root:
         Directory where Qdrant will persist the collection.
-    embed_model:
-        LiteLLM-compatible embedding model string.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with at least ``embed_model`` set.
     """
     from qdrant_client import QdrantClient
     from qdrant_client.http import models
@@ -67,7 +67,7 @@ def save_qdrant(
     rag_name = pathlib.Path(rag_root).stem
     client = QdrantClient(path=str(rag_root))
     try:
-        [probe] = litellm_embedding(["this is a test."], embed_model)
+        [probe] = litellm_embedding(["this is a test."], conf)
         vector_size = len(probe)
 
         if not client.collection_exists(rag_name):
@@ -81,7 +81,7 @@ def save_qdrant(
             logger.info(f"Created Qdrant collection {rag_name!r} (dim={vector_size})")
 
         for chunk in chunks:
-            _add_text(client, rag_name, embed_model, chunk)
+            _add_text(client, rag_name, conf, chunk)
 
         logger.info(f"Indexed {len(chunks)} chunks into Qdrant at {rag_root!r}")
     finally:
@@ -91,7 +91,7 @@ def save_qdrant(
 def search_qdrant(
     query: str,
     rag_root: str | pathlib.Path,
-    embed_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> list[str]:
     """Retrieve the *top_k* most relevant chunks for *query* from Qdrant.
@@ -102,8 +102,8 @@ def search_qdrant(
         Natural-language search query.
     rag_root:
         Directory containing the persisted Qdrant collection.
-    embed_model:
-        Must match the model used during indexing.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with at least ``embed_model`` set.
     top_k:
         Number of results to return.
 
@@ -117,7 +117,7 @@ def search_qdrant(
     rag_name = pathlib.Path(rag_root).stem
     client = QdrantClient(path=str(rag_root))
     try:
-        [query_vector] = litellm_embedding([query], embed_model)
+        [query_vector] = litellm_embedding([query], conf)
         result = client.query_points(
             collection_name=rag_name,
             query=query_vector,
@@ -138,8 +138,7 @@ def search_qdrant(
 def query_qdrant(
     query: str,
     rag_root: str | pathlib.Path,
-    llm_model: str,
-    embed_model: str,
+    conf: LitellmConfDict,
     top_k: int = 3,
 ) -> tuple[str, list[str]]:
     """Retrieve relevant chunks and generate an answer using LiteLLM.
@@ -150,10 +149,9 @@ def query_qdrant(
         Question to answer.
     rag_root:
         Directory containing the persisted Qdrant collection.
-    llm_model:
-        LiteLLM-compatible generative model string.
-    embed_model:
-        Must match the model used during indexing.
+    conf:
+        :class:`~bibirags.llm.LitellmConfDict` with ``embed_model`` and
+        ``llm_model`` set.
     top_k:
         Number of context chunks to pass to the LLM.
 
@@ -162,7 +160,7 @@ def query_qdrant(
     tuple[str, list[str]]
         ``(answer, source_chunks)``
     """
-    chunks = search_qdrant(query, rag_root, embed_model, top_k=top_k)
+    chunks = search_qdrant(query, rag_root, conf, top_k=top_k)
 
     prompt = f"""You are a document analysis assistant.
 Answer the following question using the provided context.
@@ -173,5 +171,5 @@ Question:
 Context:
 {chr(10).join(f'- {c}' for c in chunks)}
 """
-    answer = litellm_complete(prompt, llm_model)
+    answer = litellm_complete(prompt, conf)
     return answer, chunks

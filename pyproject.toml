@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bibirags"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simple, unified interface for RAG across multiple vector store backends (txtai, Chroma, Qdrant, LightRAG)"
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "chunqishi", email = "scq830@163.com" }]
+authors = [{ name = "Your Name", email = "you@example.com" }]
 keywords = ["rag", "retrieval", "llm", "vector-store", "embeddings", "ai"]
 classifiers = [
     "Development Status :: 3 - Alpha",

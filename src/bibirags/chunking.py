@@ -1,9 +1,7 @@
 """
 Document loading and chunking utilities.
 
-Supports ``.pdf`` and ``.txt`` files out of the box.  Additional file types can
-be handled by extending the ``loaders`` mapping before calling
-:func:`chunk_docs`.
+Supports ``.pdf`` and ``.txt`` files out of the box.
 """
 
 from __future__ import annotations

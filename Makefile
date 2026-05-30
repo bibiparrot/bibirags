@@ -4,7 +4,7 @@ install:
 	pip install -e ".[dev]"
 
 test:
-	pytest tests/ -v --cov=simplerags --cov-report=term-missing
+	pytest tests/ -v --cov=bibirags --cov-report=term-missing
 
 lint:
 	ruff check src/ tests/
