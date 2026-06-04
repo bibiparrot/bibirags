@@ -9,6 +9,8 @@ from __future__ import annotations
 import pathlib
 from loguru import logger
 
+from bibirags.chunkingdirectory import chunk_directory, PDFMode, DocxMode
+
 
 def chunk_docs(
     docs_path: str | pathlib.Path,
@@ -35,34 +37,12 @@ def chunk_docs(
     list[str]
         Plain-text chunks ready to be indexed by any backend.
     """
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from langchain_community.document_loaders import PyPDFLoader, TextLoader
-
-    loaders: dict[str, type] = {
-        ".pdf": PyPDFLoader,
-        ".txt": TextLoader,
-    }
-
-    docs = []
-    for f in pathlib.Path(docs_path).rglob("*"):
-        suffix = f.suffix.lower()
-        if suffix in loaders:
-            logger.debug(f"Loading {f}")
-            loader = loaders[suffix](str(f))
-            loaded = loader.load()
-            for doc in loaded:
-                doc.metadata["source"] = str(f)
-            docs.extend(loaded)
-
-    if not docs:
-        logger.warning(f"No supported documents found in {docs_path!r}")
-        return []
-
-    splitter = RecursiveCharacterTextSplitter(
+    all_chunks = chunk_directory(
+        docs_path,
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
+        pdf_mode=PDFMode.COMPLEX,
+        docx_mode=DocxMode.STRUCTURED,
     )
-    split_docs = splitter.split_documents(docs)
-    chunks = [d.page_content for d in split_docs]
-    logger.info(f"Produced {len(chunks)} chunks from {len(docs)} document(s)")
+    chunks = [c["text"] for c in all_chunks]
     return chunks

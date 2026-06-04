@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bibirags"
-version = "0.1.1"
+version = "0.1.2"
 description = "A simple, unified interface for RAG across multiple vector store backends (txtai, Chroma, Qdrant, LightRAG)"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -60,6 +60,10 @@ docs = [
     "langchain-community>=0.2.0",
     "langchain-text-splitters>=0.2.0",
     "pypdf>=4.0.0",
+    "pdfplumber>=0.11.8",
+    "pymupdf>=1.27.1",
+    "docx2txt>=0.9",
+    "unstructured>=0.22.29",
 ]
 
 # Install everything
