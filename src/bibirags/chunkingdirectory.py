@@ -19,7 +19,7 @@ import os
 import glob as glob_module
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+from loguru import logger
 
 class PDFMode(Enum):
     TEXT_ONLY = "text"  # PyPDFLoader       — fast, plain text
@@ -156,23 +156,21 @@ def chunk_directory(
             silent_errors=True,
             show_progress=True,
         )
-        try:
-            docs = loader.load()
-            if not docs:
-                continue
-            chunks = splitter.split_documents(docs)
-            for chunk in chunks:
-                src = chunk.metadata.get("source", "unknown")
-                results.setdefault(src, []).append(
-                    {
-                        "chunk_index": len(results.get(src, [])),
-                        "text": chunk.page_content,
-                        "metadata": chunk.metadata,
-                    }
-                )
-            print(f"{glob_pattern}: {len(docs)} docs → {len(chunks)} chunks")
-        except Exception as e:
-            print(f"  ✗ {glob_pattern} failed: {e}")
+
+        docs = loader.load()
+        if not docs:
+            continue
+        chunks = splitter.split_documents(docs)
+        for chunk in chunks:
+            src = chunk.metadata.get("source", "unknown")
+            results.setdefault(src, []).append(
+                {
+                    "chunk_index": len(results.get(src, [])),
+                    "text": chunk.page_content,
+                    "metadata": chunk.metadata,
+                }
+            )
+        logger.info(f"{glob_pattern}: {len(docs)} docs → {len(chunks)} chunks")
 
     return results
 
@@ -181,19 +179,19 @@ def chunk_directory(
 
 if __name__ == "__main__":
     # Plain-text PDF (fastest)
-    chunks = chunk_file("report.pdf", pdf_mode=PDFMode.TEXT_ONLY)
-
-    # PDF with tables (e.g. financial statements)
-    chunks = chunk_file("financials.pdf", pdf_mode=PDFMode.TABLES)
-
-    # Complex layout PDF (e.g. scanned / multi-column)
-    chunks = chunk_file("brochure.pdf", pdf_mode=PDFMode.COMPLEX)
-
-    # DOCX — plain text only
-    chunks = chunk_file("contract.docx", docx_mode=DocxMode.TEXT_ONLY)
-
-    # DOCX — keep headings / paragraph structure
-    chunks = chunk_file("contract.docx", docx_mode=DocxMode.STRUCTURED)
+    # chunks = chunk_file("report.pdf", pdf_mode=PDFMode.TEXT_ONLY)
+    #
+    # # PDF with tables (e.g. financial statements)
+    # chunks = chunk_file("financials.pdf", pdf_mode=PDFMode.TABLES)
+    #
+    # # Complex layout PDF (e.g. scanned / multi-column)
+    # chunks = chunk_file("brochure.pdf", pdf_mode=PDFMode.COMPLEX)
+    #
+    # # DOCX — plain text only
+    # chunks = chunk_file("contract.docx", docx_mode=DocxMode.TEXT_ONLY)
+    #
+    # # DOCX — keep headings / paragraph structure
+    # chunks = chunk_file("contract.docx", docx_mode=DocxMode.STRUCTURED)
 
     # Whole directory — PDFs treated as table-heavy, DOCX structured
     all_chunks = chunk_directory(
@@ -203,6 +201,6 @@ if __name__ == "__main__":
         pdf_mode=PDFMode.TABLES,
         docx_mode=DocxMode.STRUCTURED,
     )
-
+    print(all_chunks)
     for path, chunks in all_chunks.items():
         print(f"{path}: {len(chunks)} chunks")

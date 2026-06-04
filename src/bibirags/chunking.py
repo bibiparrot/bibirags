@@ -44,5 +44,8 @@ def chunk_docs(
         pdf_mode=PDFMode.COMPLEX,
         docx_mode=DocxMode.STRUCTURED,
     )
-    chunks = [c["text"] for c in all_chunks]
-    return chunks
+    text_chunks = []
+    for path, chunks in all_chunks.items():
+        for chunk in chunks:
+            text_chunks.append(chunk['text'])
+    return text_chunks

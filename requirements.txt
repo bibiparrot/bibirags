@@ -24,3 +24,5 @@ build>=1.2.0
 twine>=5.0.0
 pytest>=9.0.3
 ruff>=0.15.15
+msoffcrypto-tool>=6.0.0
+openpyxl>=3.1.5
