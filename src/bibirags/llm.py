@@ -17,6 +17,7 @@ from loguru import logger
 # Configuration dict
 # ---------------------------------------------------------------------------
 
+
 class LitellmConfDict(TypedDict, total=False):
     """Unified LiteLLM configuration passed to every bibirags function.
 
@@ -46,6 +47,7 @@ class LitellmConfDict(TypedDict, total=False):
 # Sync helpers
 # ---------------------------------------------------------------------------
 
+
 def litellm_embedding(texts: list[str], conf: LitellmConfDict) -> list[list[float]]:
     """Return embeddings for *texts* using ``conf["embed_model"]``.
 
@@ -68,6 +70,9 @@ def litellm_embedding(texts: list[str], conf: LitellmConfDict) -> list[list[floa
         input=texts,
         api_base=conf.get("api_base"),
         api_key=conf.get("api_key"),
+        num_retries=3,  # 重试次数
+        retry_after=1,  # 重试间隔
+        timeout=60,  # 超时时间
     )
     return [r["embedding"] for r in response.data]
 
@@ -95,6 +100,9 @@ def litellm_complete(content: str, conf: LitellmConfDict) -> str:
         temperature=0,
         api_base=conf.get("api_base"),
         api_key=conf.get("api_key"),
+        num_retries=3,  # 重试次数
+        retry_after=1,  # 重试间隔
+        timeout=60,  # 超时时间
     )
     return response.choices[0].message.content
 
@@ -102,6 +110,7 @@ def litellm_complete(content: str, conf: LitellmConfDict) -> str:
 # ---------------------------------------------------------------------------
 # Async helpers
 # ---------------------------------------------------------------------------
+
 
 async def alitellm_embedding(texts: list[str], conf: LitellmConfDict) -> list[list[float]]:
     """Async version of :func:`litellm_embedding`.
@@ -118,6 +127,9 @@ async def alitellm_embedding(texts: list[str], conf: LitellmConfDict) -> list[li
         input=clean_texts,
         api_base=conf.get("api_base"),
         api_key=conf.get("api_key"),
+        num_retries=3,  # 重试次数
+        retry_after=1,  # 重试间隔
+        timeout=60,  # 超时时间
     )
     return [r["embedding"] for r in response.data]
 
