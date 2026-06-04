@@ -14,6 +14,7 @@ configuration instead of bare model-name strings.
 
 from bibirags.llm import LitellmConfDict, litellm_embedding, litellm_complete
 from bibirags.chunking import chunk_docs
+from bibirags.chunkingdirectory import chunk_file, chunk_directory
 from bibirags.backends.txtai import save_txtai, search_txtai, query_txtai
 from bibirags.backends.chroma import save_chroma, search_chroma, query_chroma
 from bibirags.backends.qdrant import save_qdrant, search_qdrant, query_qdrant
@@ -28,6 +29,8 @@ __all__ = [
     "litellm_complete",
     # chunking
     "chunk_docs",
+    "chunk_file",
+    "chunk_directory",
     # txtai
     "save_txtai",
     "search_txtai",
