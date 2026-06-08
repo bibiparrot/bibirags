@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bibirags"
-version = "0.1.2"
+version = "0.1.3"
 description = "A simple, unified interface for RAG across multiple vector store backends (txtai, Chroma, Qdrant, LightRAG)"
 readme = "README.md"
 license = { file = "LICENSE" }
